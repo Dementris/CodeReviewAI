@@ -1,7 +1,5 @@
 services:
   codereview:
-    depends_on:
-      - redis
     build:
       dockerfile: Dockerfile
     ports:

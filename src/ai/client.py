@@ -35,11 +35,11 @@ class OpenAIAdapter(AbstractAIAdapter):
         self.client = AsyncOpenAI(
             api_key=settings_openai.OPENAI_TOKEN.get_secret_value()
         )
-        self.model = settings_ollama.MODEL_VERSION
+        self.model = settings_openai.OPENAI_MODEL
 
     async def chat_completion(self, messages):
         return await self.client.chat.completions.create(
-            messages=messages, model='gpt-3.5-turbo', temperature=0.2
+            messages=messages, model=self.model, temperature=0.2
         )
 
 
