@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import mimetypes
+import logging
 
 from typing import Annotated, List
 from urllib.parse import urlparse
@@ -18,6 +19,8 @@ from src.github.schemas import (
 )
 from src.schemas import ReviewRequest, ReviewInAI, TextFile
 
+logging.getLogger(__name__)
+
 
 class CodeReviewAIService:
     def __init__(self, github: Annotated[GithubRestAPIClient, Depends()]):
@@ -28,7 +31,8 @@ class CodeReviewAIService:
     async def review_repository(self, req: ReviewRequest):
         try:
             owner, repo = self.parse_uri(req.github_repo_url)
-        except Exception:
+        except Exception as e:
+            logging.error(e)
             raise HTTPException(status_code=404, detail='Invalid GitHub repo url')
         repository = await self.get_repository(owner, repo)
         tree = await self.get_tree(owner, repo, repository.default_branch)
@@ -38,7 +42,12 @@ class CodeReviewAIService:
         )
         # Get content from github
         tasks = [self.get_file_content(owner, repo, e) for e in elements]
-        files = await asyncio.gather(*tasks, return_exceptions=True)
+        logging.info(f'Start fetching {len(elements)} files')
+        try:
+            files = await asyncio.gather(*tasks, return_exceptions=True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        logging.info(f'Finish fetching {len(elements)} files')
         # Review content
         try:
             response = await self.ai.review_repository(
