@@ -4,8 +4,8 @@ Tested on Ollama if you want to use OpenAI, change adapter in src.service.
 
 1. Clone repository
 ```shell
-git clone https://github.com/Dementris/FileShare.git
-cd FileShare
+git clone https://github.com/Dementris/CodeReviewAI.git
+cd CodeReviewAI
 ```
 2. Create an env file as in the example.
 
