@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Annotated, List
+from typing import List
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.constants import CandidateLevel
 
@@ -23,9 +23,15 @@ class ReviewResponse(CodeReviewBase):
 
 
 class ReviewRequest(CodeReviewBase):
-    assigment_description: Annotated[str, 'Description of coding assigment']
-    github_repo_url: Annotated[str, 'URL of the GitHub repository to review']
-    candidate_level: Annotated[CandidateLevel, 'Junior, Middle, or Senior']
+    assigment_description: str = Field(
+        ..., description='Description of the coding assignment'
+    )
+    github_repo_url: str = Field(
+        ..., description='URL of the GitHub repository to review'
+    )
+    candidate_level: CandidateLevel = Field(
+        ..., description="The candidate's skill level (Junior, Middle, or Senior)"
+    )
 
 
 class TextFile(CodeReviewBase):
@@ -34,6 +40,6 @@ class TextFile(CodeReviewBase):
 
 
 class ReviewInAI(CodeReviewBase):
-    assigment_description: Annotated[str, 'Description of coding assigment']
-    candidate_level: Annotated[CandidateLevel, 'Junior, Middle, or Senior']
+    assigment_description: str
+    candidate_level: CandidateLevel
     text_files: List[TextFile]
