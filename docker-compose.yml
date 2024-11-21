@@ -9,8 +9,28 @@ services:
     env_file:
       - ".env"
 
-  redis:
-    image: redis/redis-stack
+#  redis:
+#    image: redis/redis-stack
+#    ports:
+#      - "6379:6379"
+#      - "8001:8001"
+
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
     ports:
-      - "6379:6379"
-      - "8001:8001"
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+
+volumes:
+  ollama:

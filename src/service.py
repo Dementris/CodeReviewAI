@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import json
 import mimetypes
 
 from typing import Annotated, List
@@ -8,19 +9,21 @@ from urllib.parse import urlparse
 from fastapi import HTTPException
 from fastapi.params import Depends
 
+from src.ai.client import AIClient, OllamaAdapter
 from src.github.client import GithubRestAPIClient
 from src.github.schemas import (
     GithubRepositoryResponse,
     GithubTreeResponse,
     GithubTreeElement,
-    GithubTextFile,
 )
-from src.schemas import ReviewRequest
+from src.schemas import ReviewRequest, ReviewInAI, TextFile
 
 
 class CodeReviewAIService:
     def __init__(self, github: Annotated[GithubRestAPIClient, Depends()]):
         self.github = github
+        self.ai = AIClient(ai_adapter=OllamaAdapter())
+        # self.ai = AIClient(ai_adapter=OpenAIAdapter())
 
     async def review_repository(self, req: ReviewRequest):
         try:
@@ -35,9 +38,17 @@ class CodeReviewAIService:
         )
         # Get content from github
         tasks = [self.get_file_content(owner, repo, e) for e in elements]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        tree.text_files = results
-        return tree
+        files = await asyncio.gather(*tasks, return_exceptions=True)
+        # Review content
+        try:
+            response = await self.ai.review_repository(
+                ReviewInAI(**req.model_dump(), text_files=files)
+            )
+        except Exception as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        raw = response.choices[0].message.content.strip()
+        raw.replace('```json\n', '').replace('```', '')
+        return json.loads(raw)
 
     async def get_tree(self, owner, repo, default_branch):
         response = await self.github.get_tree(owner, repo, default_branch)
@@ -53,16 +64,19 @@ class CodeReviewAIService:
 
     async def get_file_content(
         self, owner, repo, element: GithubTreeElement
-    ) -> GithubTextFile:
+    ) -> TextFile:
         response = await self.github.get_content(owner, repo, element.sha)
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.text)
         json_data = response.json()
-        return GithubTextFile(
-            **element.model_dump(),
+        return TextFile(
+            path=element.path,
             content=self.decode_content(json_data['content']),
-            encoding=json_data['encoding'],
         )
+
+    @staticmethod
+    def process_data(data):
+        return json.loads(data)
 
     @staticmethod
     def is_text(path):

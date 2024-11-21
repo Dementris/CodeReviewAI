@@ -23,23 +23,12 @@ class GithubTreeElement(CodeReviewBase):
     size: None | int = None
 
 
-class GithubTextFile(GithubTreeElement):
-    content: str = None
-    encoding: str = None
-
-
 class GithubTreeResponse(CodeReviewBase):
     url: str
     truncated: bool
-    tree: List[GithubTreeElement | GithubTextFile]
-    text_files: List[GithubTextFile] | None = None
+    tree: List[GithubTreeElement]
 
     @computed_field
     @property
     def tree_length(self) -> int:
         return len(self.tree)
-
-    @computed_field
-    @property
-    def text_file_length(self) -> int:
-        return len(self.text_files)

@@ -16,7 +16,7 @@ class CodeReviewBase(BaseModel):
 
 
 class ReviewResponse(CodeReviewBase):
-    found_files: int
+    found_files: List[str]
     comments: List[str]
     rating: float
     conclusion: str
@@ -26,3 +26,14 @@ class ReviewRequest(CodeReviewBase):
     assigment_description: Annotated[str, 'Description of coding assigment']
     github_repo_url: Annotated[str, 'URL of the GitHub repository to review']
     candidate_level: Annotated[CandidateLevel, 'Junior, Middle, or Senior']
+
+
+class TextFile(CodeReviewBase):
+    path: str
+    content: str = None
+
+
+class ReviewInAI(CodeReviewBase):
+    assigment_description: Annotated[str, 'Description of coding assigment']
+    candidate_level: Annotated[CandidateLevel, 'Junior, Middle, or Senior']
+    text_files: List[TextFile]
